@@ -5,6 +5,18 @@ VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "LeNet", "LeNet.pyproj", "{C439A4A3-FD27-463B-BB48-28C1BFB86032}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SAMPLE", "SAMPLE", "{59A936CC-DF84-4DC4-856F-8A933617E1C9}"
+	ProjectSection(SolutionItems) = preProject
+		SAMPLE.py = SAMPLE.py
+		SAMPLE2.py = SAMPLE2.py
+		SAMPLE3.py = SAMPLE3.py
+		SAMPLE4(FROM CQR).py = SAMPLE4(FROM CQR).py
+		SAMPLE5(FROM GZA).py = SAMPLE5(FROM GZA).py
+		SAMPLE6(FROM GZA).py = SAMPLE6(FROM GZA).py
+		SAMPLE7(FROM CQR).py = SAMPLE7(FROM CQR).py
+		SAMPLE8(FROM CQR).py = SAMPLE8(FROM CQR).py
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

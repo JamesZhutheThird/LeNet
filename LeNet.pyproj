@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c439a4a3-fd27-463b-bb48-28c1bfb86032</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>lenet.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

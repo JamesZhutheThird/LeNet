@@ -9,24 +9,19 @@ from lenet import LeNet
 
 def normalize_image(images):
     ''' 对图像做归一化处理 '''
-    img = images.astype(np.float32)/127.5-1
-    #img = 2 * (images - np.min(images))/(np.max(images) - np.min(images)) - 1
-    return img
-
-def formalize_matrix(z):
-    out = z.reshape(z.shape[0],1,28,28)
-    #out = z[:,np.newaxis,:,:]
-    return out
+    images = 2 * (images - np.min(images))/(np.max(images) - np.min(images)) - 1
+    return images
 
 def one_hot_labels(labels):
     '''
     将labels 转换成 one-hot向量
     eg:  label: 3 --> [0,0,0,1,0,0,0,0,0,0]
     '''
-    lab = np.zeros((labels.size, 10))
-    for i, row in enumerate(lab):
-        row[labels[i]] = 1
-    return lab
+    n_class = labels.max() + 1
+    onehot = np.zeros((len(labels), n_class))
+    onehot[range(len(labels)), labels] = 1
+    
+    return onehot
 
 
 def main():
@@ -40,13 +35,14 @@ def main():
     plt.show()
     print(x_train.shape, x_train[0].max(), x_train[0].min()) #(60000, 28, 28) 255 0 5
     print(x_test.shape, x_test[0].max(), x_test[0].min()) #(10000, 28, 28) 255 0 7
+    
 
     x_train = normalize_image(x_train)
     x_test = normalize_image(x_test)
-    x_train = formalize_matrix(x_train)
-    x_test = formalize_matrix(x_test)
     y_train = one_hot_labels(y_train)
     y_test = one_hot_labels(y_test)
+    
+    
 
     net = LeNet()
 
@@ -55,7 +51,9 @@ def main():
     accu = net.evaluate(x_test, labels=y_test)
     print("final accuracy {}".format(accu))
 
+
 if __name__ == "__main__":
     main()
+
 
 
