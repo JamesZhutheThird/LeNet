@@ -36,8 +36,8 @@ def main():
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'], f['y_test']
 
-    plt.imshow(x_train[59999], cmap='gray')
-    plt.show()
+    #plt.imshow(x_train[59999], cmap='gray')
+    #plt.show()
     print(x_train.shape, x_train[0].max(), x_train[0].min()) #(60000, 28, 28) 255 0 5
     print(x_test.shape, x_test[0].max(), x_test[0].min()) #(10000, 28, 28) 255 0 7
 
