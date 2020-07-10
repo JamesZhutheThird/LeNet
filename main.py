@@ -9,8 +9,8 @@ from lenet import LeNet
 
 def normalize_image(images):
     ''' 对图像做归一化处理 '''
-    img = images.astype(np.float32)/127.5-1
-    #img = 2 * (images - np.min(images))/(np.max(images) - np.min(images)) - 1
+    #img = images.astype(np.float32)/127.5-1
+    img = 2 * (images - np.min(images))/(np.max(images) - np.min(images)) - 1
     return img
 
 def formalize_matrix(z):

@@ -22,10 +22,10 @@ class relu():
         pass
 
     def forward(z):
-        return z*(z>0)
+        return z * (z > 0)
 
     def backward(z):
-        return 1*(z>0)
+        return 1 * (z > 0)
 
 class soft_max():
     def __init__(self):
@@ -55,13 +55,13 @@ class soft_max():
         #dX = np.dot(dout,dZ)
         #dX = np.dot(dX,dY)
         #return dX
-        pass
+        return z
 
 class avg_pooling():
     def __init__(self):
         pass
 
-    def forward(feature, size=2, stride=2):
+    def forward(feature, size = 2, stride = 2):
         
         #平均池化前向过程
         #:param feature: 卷积层矩阵,形状(B,C,H,W)，N为Batch_size，C为通道数
@@ -86,7 +86,7 @@ class avg_pooling():
         #print(pool_out.shape)
         return pool_out
 
-    def backward(next_dz, feature, size=2, stride=2):
+    def backward(next_dz, feature, size = 2, stride = 2):
 
         #平均池化反向过程
         #:param next_dz：损失函数关于最大池化输出的损失
@@ -96,19 +96,18 @@ class avg_pooling():
         #:param padding: 0填充
         #:return:
 
-        B, C, H, W = feature.shape
-        _, _, out_h, out_w = next_dz.shape
+        C, H, W = feature.shape#(16, 8, 8)
+        _, out_h, out_w = next_dz.shape#(16, 4, 4)
 
-        pool_dz = np.zeros((B, C, (out_h-1)*stride+size, (out_w-1)*stride+size), dtype=np.float32)
+        pool_dz = np.zeros((C, (out_h - 1) * stride + size, (out_w - 1) * stride + size), dtype=np.float32)
 
-        for b in np.arange(B):
-            for c in np.arange(C):
-                for i in np.arange(out_h):
-                    for j in np.arange(out_w):
-                        # 每个神经元均分梯度
-                        pool_dz[b, c,
-                        stride * i:stride * i + size,
-                        stride * j:stride * j + size] += next_dz[n, c, i, j] / (size*size)
+        for c in np.arange(C):
+            for i in np.arange(out_h):
+                for j in np.arange(out_w):
+                    # 每个神经元均分梯度
+                    pool_dz[c,
+                    stride * i:stride * i + size,
+                    stride * j:stride * j + size] += next_dz[c, i, j] / (size * size)
         return pool_dz
 
 class flatten():
@@ -147,29 +146,30 @@ class conv():
 
         # 初始化输出的特征图片，由于没有使用零填充，图片尺寸会减小
         img_out = np.zeros((feature_h, feature_w, kernel_num))
-        img_matrix = np.zeros((feature_h*feature_w, kernel_h*kernel_w*img_ch))
-        kernel_matrix = np.zeros((kernel_h*kernel_w*img_ch, kernel_num))
+        img_matrix = np.zeros((feature_h * feature_w, kernel_h * kernel_w * img_ch))
+        kernel_matrix = np.zeros((kernel_h * kernel_w * img_ch, kernel_num))
         """
         将输入图片张量转换成矩阵形式
         """
         for j in range(img_ch):
             img_2d = np.copy(img[j,:,:])   
-            shape=(feature_h,feature_w,kernel_h,kernel_w) 
+            shape = (feature_h,feature_w,kernel_h,kernel_w) 
             strides = (img_w,1,img_w,1)
             strides = img_2d.itemsize * np.array(strides)
             x_stride = np.lib.stride_tricks.as_strided(img_2d, shape=shape, strides=strides)
             x_cols = np.ascontiguousarray(x_stride)
-            x_cols = x_cols.reshape(feature_h*feature_w,kernel_h*kernel_w)
-            img_matrix[:,j*kernel_h*kernel_w:(j+1)*kernel_h*kernel_w]=x_cols
+            x_cols = x_cols.reshape(feature_h * feature_w,kernel_h * kernel_w)
+            img_matrix[:,j * kernel_h * kernel_w:(j + 1) * kernel_h * kernel_w] = x_cols
         
         # 将输入图片张量转换成矩阵形式（另解）
         #for i in range(feature_h*feature_w):
         #    for j in range(img_ch):
-        #        img_matrix[i, j*kernel_h*kernel_w:(j+1)*kernel_h*kernel_w] = img[np.uint16(i/feature_w):np.uint16(i/feature_w+kernel_h),np.uint16(i%feature_w):np.uint16(i%feature_w+kernel_w),j].reshape(kernel_h*kernel_w)    
+        #        img_matrix[i, j*kernel_h*kernel_w:(j+1)*kernel_h*kernel_w] =
+        #        img[np.uint16(i/feature_w):np.uint16(i/feature_w+kernel_h),np.uint16(i%feature_w):np.uint16(i%feature_w+kernel_w),j].reshape(kernel_h*kernel_w)
     
         # 将卷积核张量转换成矩阵形式
         for i in range(kernel_num):
-            kernel_matrix[:,i] = conv_kernel[i,:].transpose(2,0,1).reshape(kernel_w*kernel_h*img_ch) 
+            kernel_matrix[:,i] = conv_kernel[i,:].transpose(2,0,1).reshape(kernel_w * kernel_h * img_ch) 
         
         #卷积
         feature_matrix = np.dot(img_matrix, kernel_matrix)
@@ -180,7 +180,7 @@ class conv():
         for i in range(kernel_num):
             img_out[:,:,i] = feature_matrix[:,i].reshape(feature_h , feature_w)
 
-        #print(img_out.shape)    
+        #print(img_out.shape)
         img_out = img_out.transpose(2,0,1)
         #print(img_out.shape)
 
@@ -193,27 +193,27 @@ class conv():
         kernel_h = img_h - feature_h + 1
         kernel_w = img_w - feature_w + 1
     
-        in_img_matrix = np.zeros([kernel_h*kernel_w*img_ch, feature_h*feature_w])
-        out_img_delta_matrix = np.zeros([feature_h*feature_w, kernel_num])
+        in_img_matrix = np.zeros([kernel_h * kernel_w * img_ch, feature_h * feature_w])
+        out_img_delta_matrix = np.zeros([feature_h * feature_w, kernel_num])
     
         # 将输入图片转换成矩阵形式
         for j in range(img_ch):
             img_2d = np.copy(in_img[:,:,j])   
-            shape=(kernel_h,kernel_w,feature_h,feature_w) 
+            shape = (kernel_h,kernel_w,feature_h,feature_w) 
             strides = (img_w,1,img_w,1)
             strides = img_2d.itemsize * np.array(strides)
             x_stride = np.lib.stride_tricks.as_strided(img_2d, shape=shape, strides=strides)
             x_cols = np.ascontiguousarray(x_stride)
-            x_cols = x_cols.reshape(kernel_h*kernel_w,feature_h*feature_w)
-            in_img_matrix[j*kernel_h*kernel_w:(j+1)*kernel_h*kernel_w,:]=x_cols
+            x_cols = x_cols.reshape(kernel_h * kernel_w,feature_h * feature_w)
+            in_img_matrix[j * kernel_h * kernel_w:(j + 1) * kernel_h * kernel_w,:] = x_cols
         # 将输入图片张量转换成矩阵形式（另解）
-        for i in range(feature_h*feature_w):
+        for i in range(feature_h * feature_w):
             for j in range(img_ch):
-                img_matrix[i, j*kernel_h*kernel_w:(j+1)*kernel_h*kernel_w] = img[np.uint16(i/feature_w):np.uint16(i/feature_w+kernel_h),np.uint16(i%feature_w):np.uint16(i%feature_w+kernel_w),j].reshape(kernel_h*kernel_w)     
+                img_matrix[i, j * kernel_h * kernel_w:(j + 1) * kernel_h * kernel_w] = img[np.uint16(i / feature_w):np.uint16(i / feature_w + kernel_h),np.uint16(i % feature_w):np.uint16(i % feature_w + kernel_w),j].reshape(kernel_h * kernel_w)     
     
         # 将输出图片delta误差转换成矩阵形式
         for i in range(kernel_num):
-            out_img_delta_matrix[:, i] = out_img_delta[:, :, i].reshape(feature_h*feature_w)
+            out_img_delta_matrix[:, i] = out_img_delta[:, :, i].reshape(feature_h * feature_w)
         
         kernel_matrix = np.dot(in_img_matrix, out_img_delta_matrix)
         nabla_conv = np.zeros([kernel_num, kernel_h, kernel_w, img_ch])
@@ -234,7 +234,99 @@ class conv():
                 z[i,:,:] += bias[i,0]
         return z
 
-class loss():
+    def conv_forward_bak(z, K, b, strides=(1, 1)):
+        """
+        多通道卷积前向过程
+        :param z: 卷积层矩阵,形状(C,H,W),C为通道数
+        :param K: 卷积核,形状(D,k1,k2,C),C为输入通道数,D为输出通道数
+        :param b: 偏置,形状(D,)
+        :param strides: 步长
+        :return: 卷积结果
+        """
+
+        #N, _, height, width = padding_z.shape
+        #C, D, k1, k2 = K.shape
+        #assert (height - k1) % strides[0] == 0, '步长不为1时，步长必须刚好能够被整除'
+        #assert (width - k2) % strides[1] == 0, '步长不为1时，步长必须刚好能够被整除'
+        #conv_z = np.zeros((N, D, 1 + (height - k1) // strides[0], 1 + (width - k2) // strides[1]))
+        #for n in np.arange(N):
+        #    for d in np.arange(D):
+        #        for h in np.arange(height - k1 + 1)[::strides[0]]:
+        #            for w in np.arange(width - k2 + 1)[::strides[1]]:
+        #                conv_z[n, d, h // strides[0], w // strides[1]] = np.sum(
+        #                    padding_z[n, :, h:h + k1, w:w + k2] * K[:, d]) + b[d]
+    
+
+
+        _, height, width = z.shape
+        D, k1, k2, C = K.shape
+        print(z.shape)#(1, 28, 28)(6, 12, 12)(16, 8, 8)(6, 12, 12)
+        print(K.shape)#(6, 5, 5, 1)(16, 5, 5, 6)(16, 5, 5, 6)(1, 8, 8, 16)
+        kt = K.transpose(0,3,1,2)
+        print(kt.shape)#(6, 1, 5, 5)(16, 6, 5, 5)(16, 6, 5, 5)(1, 16, 8, 8)
+
+        conv_z = np.zeros((D, 1 + (height - k1) // strides[0], 1 + (width - k2) // strides[1]))
+        print(conv_z.shape)#(6, 24, 24)(16, 8, 8)
+
+        for d in np.arange(D):
+            for h in np.arange(height - k1 + 1)[::strides[0]]:
+                for w in np.arange(width - k2 + 1)[::strides[1]]:
+                    conv_z[d, h // strides[0], w // strides[1]] = np.sum(
+                        z[:, h:h + k1, w:w + k2] * kt[d, :]) + b[d]
+        
+        print(conv_z.shape)#(6, 24, 24)
+
+        return conv_z
+
+    def conv_backward(next_dz, K, z, strides=(1, 1)):
+        """
+        多通道卷积层的反向过程
+        :param next_dz: 卷积输出层的梯度,(D,H,W),H,W为卷积输出层的高度和宽度
+        :param K: 当前层卷积核，(C,k1,k2,D)
+        :param z: 卷积层矩阵,形状(C,H,W)，C为通道数
+        :param strides: 步长
+        :return:
+        """
+
+        _, H, W = z.shape
+        D, k1, k2, C = K.shape
+        D1, H1, W1 = next_dz.shape
+        print(z.shape)#(6, 12, 12)
+        print(K.shape)#(16, 5, 5, 6)(6, 5, 5, 1)
+
+
+        # 卷积核梯度
+        #dk = np.zeros((D, k1, k2, C))
+        
+
+        # 卷积核高度和宽度翻转180度
+        flip_K = np.flip(K, (1, 2))
+        swap_flip_K = np.swapaxes(flip_K, 0, 3)
+        print(next_dz.shape)#(16, 8, 8)
+        print(swap_flip_K.shape)#(6, 5, 5, 16)
+        dz = conv.conv_forward_bak(next_dz, swap_flip_K, np.zeros((C,), dtype=np.float))
+
+        # 求卷积核的梯度dK
+        next_dz_=np.zeros([C, D1, H1, W1])
+        for c in range(C):
+            next_dz_[c,:,:,:] = next_dz
+        next_dz_ = next_dz_.transpose(1,2,3,0)
+        print(z.shape)#(6, 12, 12)
+        print(next_dz_.shape)#(16, 8, 8, 6)
+        dk = conv.conv_forward_bak(z, next_dz_, np.zeros((D,), dtype=np.float))
+        print(z.shape)#(6, 12, 12)
+        print(next_dz_.shape)#(16, 8, 8, 6)
+
+        # 偏置的梯度
+        dbk = np.sum(np.sum(next_dz, axis=-1), axis=-1)  # 在高度、宽度上相加；批量大小上相加
+
+        print(dk.shape)#(16, 5, 5)
+        print(dbk.shape)#(16,)
+        print(dz.shape)#(6, 4, 4)
+
+        return dk, dbk, dz
+
+class loss_cal():
     def __init__(self):
         pass
 
@@ -261,8 +353,8 @@ class loss():
         y_exp = np.exp(y_shift)
         y_probability = y_exp / np.sum(y_exp, axis=-1, keepdims=True)
         loss = np.mean(np.sum(-y_true * np.log(y_probability), axis=-1))  # 损失函数
-        dy = y_probability - y_true
-        return loss, dy
+        error = y_probability - y_true
+        return loss, error
 
 class fc():
     def __init__(self):
@@ -288,31 +380,18 @@ class fc():
         :return:
         """
         N = z.shape[0]
-        dz = np.dot(next_dz, W.T)       # 当前层的梯度
-        dw = np.dot(z.T, next_dz)       # 当前层权重的梯度
+        print(next_dz.shape)#(10, 1)(64, 1)
+        print(W.shape)#(10, 64)(64, 128)
+        print(z.shape)#(64, 1)(128, 1)
+        dw = np.dot(next_dz, z.T)       # 当前层权重的梯度
+        print(dw.shape)#(10, 64)(64, 128)
         db = np.sum(next_dz, axis=0)    # 当前层偏置的梯度, N个样本的梯度求和
+        print(db.shape)#(1,)(1,)
+        dz = np.dot(W.T, next_dz)       # 当前层的梯度
+        print(dz.shape)#(64, 1)(128, 1)
         return dw / N, db / N, dz
 
-def get_accuracy(pred, label, batch_size=16):
-    """
-    :param pred:
-    :param label:
-    :param batch_size:
-    :return:
-    """
-    scores = np.zeros_like(label, dtype=np.float)
-    num = pred.shape[0]
-    for i in range(num // batch_size):
-        s = i * batch_size
-        e = s + batch_size
-        scores[s:e] = LeNet.forward(pred[s:e])
-    # 余数处理
-    remain = num % batch_size
-    if remain > 0:
-        scores[-remain:] = LeNet.forward(pred[-remain:])
-    # 计算精度
-    accuracy = np.mean(np.argmax(scores, axis=1) == np.argmax(label, axis=1))
-    return accuracy
+
 
 ## 在原LeNet-5上进行少许修改后的网路结构
 """
@@ -360,6 +439,7 @@ class LeNet(object):
         self.biases.append(np.random.randn(64,1))
         self.weights.append(np.random.randn(10,64))
         self.biases.append(np.random.randn(10,1))
+
         
         print("initialize finished")
 
@@ -376,62 +456,77 @@ class LeNet(object):
         Arguments:
             x {np.array} --shape为 B，C，H，W
         """
-        #print("forward started")
+        print("forward started")
 
         B = x.shape[0]
-        out = np.zeros([B , 10 , 1])
+       
         
+        self.conv1 = np.zeros([B,6,24,24])
+        self.pool1 = np.zeros([B,6,12,12])
+        self.conv2 = np.zeros([B,16,8,8])
+        self.pool2 = np.zeros([B,16,4,4])
+        self.fl = np.zeros([B,256,1])
+        self.fc1 = np.zeros([B,128,1])
+        self.fc2 = np.zeros([B,64,1])
+        self.fc3 = np.zeros([B,10,1])
+        self.softmax = np.zeros([B,10,1])
+        self.out = np.zeros([B,10,1])
+
+
+
         for i in range(B):
             #第一次卷积
-            conv1 = relu.forward(conv.add_bias(conv.forward(x[i,:,:,:] , self.kernels[0]), self.kernels_biases[0]))
-            #print(conv1.shape)#(6, 24, 24)
-            #print(conv1)
-            pool1 = avg_pooling.forward(conv1)
-            #print(pool1.shape)#(6, 12, 12)
-            #print(pool1)
+            #self.conv1[i,:,:,:] = relu.forward(conv.add_bias(conv.forward(x[i,:,:,:] , self.kernels[0]), self.kernels_biases[0]))
+            self.conv1[i,:,:,:] = relu.forward(conv.conv_forward_bak(x[i,:,:,:] , self.kernels[0], self.kernels_biases[0]))
+            print(self.conv1.shape)#(16, 6, 24, 24)
+            #print(self.conv1)
+            self.pool1[i,:,:,:] = avg_pooling.forward(self.conv1[i,:,:,:])
+            #print(self.pool1.shape)#(16, 6, 12, 12)
+            #print(self.pool1)
 
             #第二次卷积
-            conv2 = relu.forward(conv.add_bias(conv.forward(pool1, self.kernels[1]), self.kernels_biases[1]))
-            #print(conv2.shape)#(16, 8, 8)
-            #print(conv2)
-            pool2 = avg_pooling.forward(conv2)
-            #print(pool2.shape)#(16, 4, 4)
-            #print(pool2)
+            #self.conv2[i,:,:,:] = relu.forward(conv.add_bias(conv.forward(self.pool1[i,:,:,:], self.kernels[1]), self.kernels_biases[1]))
+            self.conv2[i,:,:,:] = relu.forward(conv.conv_forward_bak(self.pool1[i,:,:,:] , self.kernels[1], self.kernels_biases[1]))
+            print(self.conv2.shape)#(16, 16, 8, 8)
+            #print(self.conv2)
+            self.pool2[i,:,:,:] = avg_pooling.forward(self.conv2[i,:,:,:])
+            #print(self.pool2.shape)#(16, 16, 4, 4)
+            #print(self.pool2)
 
             #flatten
-            fl = flatten.forward(pool2)
-            #print(fl.shape)#(256, 1)
-            #print(fl)
+            self.fl[i,:,:] = flatten.forward(self.pool2[i,:,:])
+            #print(self.fl.shape)#(16, 256, 1)
+            #print(self.fl)
 
             #第一次FC
-            fc1 = relu.forward(fc.forward(self.weights[0] , fl, self.biases[0]))
-            #print(fc1.shape)#(128, 1)
-            #print(fc1)
+            self.fc1[i,:,:] = relu.forward(fc.forward(self.weights[0] , self.fl[i,:,:], self.biases[0]))
+            #print(self.fc1.shape)#(16, 128, 1)
+            #print(self.fc1)
 
             #第二次FC
-            fc2 = relu.forward(fc.forward(self.weights[1] , fc1, self.biases[1]))
-            #print(fc2.shape)#(64, 1)
+            self.fc2[i,:,:] = relu.forward(fc.forward(self.weights[1] , self.fc1[i,:,:], self.biases[1]))
+            #print(fc2.shape)#(16, 64, 1)
             #print(fc2)
 
             #第三次FC
-            fc3 = relu.forward(fc.forward(self.weights[2] , fc2, self.biases[2]))
-            #print(fc3.shape)#(10, 1)
-            #print(fc3)
+            self.fc3[i,:,:] = relu.forward(fc.forward(self.weights[2] , self.fc2[i,:,:], self.biases[2]))
+            #print(self.fc3.shape)#(16, 10, 1)
+            #print(self.fc3)
 
             #softmax
-            softmax=soft_max.forward(fc3)
-            #print(softmax.shape)#(10, 1)
-            #print(softmax)
-            out[i,:,:] = softmax
-            #print(out.shape)#(16, 10, 1)
-            #print(out)
+            self.softmax[i,:,:] = soft_max.forward(self.fc3[i,:,:])
+            #print(self.softmax.shape)#(16, 10, 1)
+            #print(self.softmax)
+            self.out[i,:,:] = self.softmax[i,:,:]
+            #print(self.out.shape)#(16, 16, 10, 1)
+            #print(self.out)
 
-        out=out.reshape(16, 10)
+        self.out = self.out.reshape(16, 10)
         #print(out.shape)#(16, 10)
-        #print("forward finished")    
-        return out
+        print("forward finished")
+        return self.out
 
-    def backward(self, error, lr=1.0e-3):
+    def backward(self, error, lr = 1.0e-3):
         """根据error，计算梯度，并更新model中的权值
         Arguments:
             error {np array} -- 即计算得到的loss结果
@@ -439,31 +534,94 @@ class LeNet(object):
         """
         print("backward started")
 
+        B = error.shape[0]
+
+        #self.conv1_ = np.zeros([B,6,24,24])
+        #self.pool1_ = np.zeros([B,6,12,12])
+        #self.conv2_ = np.zeros([B,16,8,8])
+        #self.pool2_ = np.zeros([B,16,4,4])
+        #self.fl_ = np.zeros([B,256,1])
+        #self.fc1_ = np.zeros([B,128,1])
+        #self.fc2_ = np.zeros([B,64,1])
+        #self.fc3_ = np.zeros([B,10,1])
+        #self.softmax_ = np.zeros([B,10,1])
+        #self.out_ = np.zeros([B,10,1])
+
+        self.conv1_ = np.zeros([B,6,28,28])
+        self.pool1_ = np.zeros([B,6,24,24])
+        self.conv2_ = np.zeros([B,6,12,12])
+        self.pool2_ = np.zeros([B,16,8,8])
+        self.dk1_=np.zeros([B,6,5,5])
+        self.dk2_=np.zeros([B,16,5,5])
+        self.dkb1_=np.zeros([B,1])
+        self.dkb2_=np.zeros([B,1])
+        self.fl_ = np.zeros([B,16,4,4])
+        self.fc1_ = np.zeros([B,256,1])
+        self.fc2_ = np.zeros([B,128,1])
+        self.fc3_ = np.zeros([B,64,1])
+        self.dw1_=np.zeros([B,128,256])
+        self.dw2_=np.zeros([B,64,128])
+        self.dw3_=np.zeros([B,10,64])
+        self.db1_=np.zeros([B,1])
+        self.db2_=np.zeros([B,1])
+        self.db3_=np.zeros([B,1])
+        self.softmax_ = np.zeros([B,10,1])
+        self.out_ = np.zeros([B,10,1])
+        
+
+
+
+        error = error.reshape(16, 10, 1)
+
         for i in range(B):
             #softmax
-            softmax=soft_max.backward(error)
-            
+            self.softmax_[i,:,:] = soft_max.backward(error[i,:,:])
+            print(self.softmax_.shape)#(10, 1)
+            #print(self.softmax_)
+
             #第三次FC
-            fc3 = fc.backward(relu.backward(softmax))
-            
+            self.dw3_[i,:,:],self.db3_[i,:],self.fc3_[i,:,:] = fc.backward(relu.backward(self.softmax_[i,:,:]),self.weights[2],self.fc2[i,:,:])
+            print(self.dw3_.shape)#(16, 10, 64)
+            #print(self.dw3_)
+            print(self.db3_.shape)#(16, 1)
+            #print(self.db3_)
+            print(self.fc3_.shape)#(16, 64, 1)
+            #print(self.fc3_)
+
+
+
             #第二次FC
-            fc2 = fc.backward(relu.backward(fc3))
-            
+            self.dw2_[i,:,:],self.db2_[i,:],self.fc2_[i,:,:] = fc.backward(relu.backward(self.fc3_[i,:,:]),self.weights[1],self.fc1[i,:,:])
+            print(self.dw2_.shape)#(16, 64, 128)
+            #print(self.dw2_)
+            print(self.db2_.shape)#(16, 1)
+            #print(self.db2_)
+            print(self.fc2_.shape)#(16, 128, 1)
+            #print(self.fc2_)
+
             #第一次FC
-            fc1 = fc.backward(relu.backward(fc2))
-            
+            self.dw1_[i,:,:],self.db1_[i,:],self.fc1_[i,:,:] = fc.backward(relu.backward(self.fc2_[i,:,:]),self.weights[0],self.fl[i,:,:])
+            print(self.dw1_.shape)#(16, 128, 256)
+            #print(self.dw1_)
+            print(self.db1_.shape)#(16, 1)
+            #print(self.db1_)
+            print(self.fc1_.shape)#(16, 256, 1)
+            #print(self.fc1_)
+
             #flatten
-            fl = flatten.backward(fc1)
+            self.fl_[i,:,:,:] = flatten.backward(self.fc1_[i,:,:], self.pool2[i,:,:,:])
+            print(self.fl_.shape)#(16, 16, 4, 4)
+            print(self.fl_)
             
             #第二次卷积
-            pool2 = avg_pooling.backward(fl)
-            relu2 = relu.backward(pool2)
-            conv2 = conv.backward(relu2)
+            self.pool2_[i,:,:,:] = avg_pooling.backward(self.fl_[i,:,:,:], self.conv2[i,:,:,:])
+            self.dk2_[i,:,:,:],self.dkb2_[i,:],self.conv2_[i,:,:,:] = conv.conv_backward(relu.backward(self.pool2_[i,:,:,:]), self.kernels[1], self.pool1[i,:,:,:])
             
+            x=np.zeros([1,28,28])
+
             #第一次卷积
-            pool1 = avg_pooling.backward(conv2)
-            relu1 = relu.backward(pool1)
-            conv1 = conv.backward(relu1)
+            self.pool1_[i,:,:,:] = avg_pooling.backward(self.dk2_[i,:,:,:], self.conv1[i,:,:,:])
+            self.dk1_[i,:,:,:],self.dkb1_[i,:],self.conv1_[i,:,:,:] = conv.conv_backward(relu.backward(self.pool1_[i,:,:,:]), self.kernels[0],x)
 
         print("backward finished")
         return out
@@ -482,10 +640,31 @@ class LeNet(object):
             x {np array} -- BCWH
             labels {np array} -- B x 10
         """
-        print("evaluatw started")
-        acc=get_accuracy(x,labels)
-        print("evaluatw finished")
+        print("evaluate started")
+        acc = self.get_accuracy(x, labels)
+        print("evaluate finished")
         return acc
+
+    def get_accuracy(self, pred, label, batch_size = 16):
+        """
+        :param pred:
+        :param label:
+        :param batch_size:
+        :return:
+        """
+        scores = np.zeros_like(label, dtype=np.float)
+        num = pred.shape[0]
+        for i in range(num // batch_size):
+            s = i * batch_size
+            e = s + batch_size
+            scores[s:e,:] = self.forward(pred[s:e,:,:,:])
+        # 余数处理
+        remain = num % batch_size
+        if remain > 0:
+            scores[-remain:,:] = self.forward(pred[-remain:,:,:,:])
+        # 计算精度
+        accuracy = np.mean(np.argmax(scores, axis=1) == np.argmax(label, axis=1))
+        return accuracy
 
     def data_augmentation(self, images):
         '''
@@ -495,6 +674,69 @@ class LeNet(object):
         比如把6旋转90度变成了9，但是仍然标签为6 就不合理了
         '''
         return images
+
+    def fit(self,
+        train_image,
+        train_label,
+        test_image = None,
+        test_label = None,
+        epoches = 1,
+        batch_size = 16,
+        lr = 1.0e-3):
+        iternum = 0
+        sum_time = 0
+        accuracies = []
+        print("fit started")
+        last = time.time()
+
+        for epoch in range(epoches):
+
+            train_image = self.data_augmentation(train_image)
+            
+            num_train = train_image.shape[0]
+            num_batch = num_train // batch_size
+            
+            for batch in range(num_batch):
+                # get batch data
+                batch_mask = np.random.choice(num_train, batch_size, False)
+                images = train_image[batch_mask]
+                labels = train_label[batch_mask]
+                images = images.reshape(batch_size,1,28,28)
+                pred = self.forward(images)
+                loss, error = loss_cal.cross_entropy_loss(pred,labels)
+                self.backward(error)
+                iternum += 1
+                duration = time.time() - last
+                sum_time += duration
+                last = time.time()
+                speed = duration / batch_size
+                print('iternum:%d' % iternum,"loss:",loss,"speed:%.4f" % speed,"s/image")
+                iternum +=0
+
+
+            #for imgs, labels in zip(batch_images, batch_labels):
+
+            #    images = imgs.reshape(batch_size,1,28,28)
+            ##    print('yes')
+            #    pred = self.forward(images)
+            #    error = loss.cross_entropy_loss(pred,labels)
+            #    iternum += 1
+            #    print('iternum:%d' % iternum,"loss:",error)
+            ##    self.backward(batch_size,error)
+            ##    print('labels:',labels.shape)
+            #    pass
+            #duration = time.time() - last
+            #sum_time += duration
+
+            if epoch % 1 == 0:
+                accuracy = self.evaluate(test_image, test_label)
+                print("epoch{} accuracy{}".format(epoch, accuracy))
+                accuracies.append(accuracy)
+
+        avg_time = sum_time / epoches
+        print("fit finished")
+        return avg_time, accuracies
+
 
     #def fit(
     #    self,
@@ -515,8 +757,9 @@ class LeNet(object):
     #        train_image = self.data_augmentation(train_image)
     #        ## 随机打乱 train_image 的顺序， 但是注意train_image 和 test_label 仍需对应
     #        '''
-    #        # 1. 一次forward，backward肯定不能是所有的图像一起,
-    #        因此需要根据 batch_size 将 train_image 和 train_label 分成: [ batch0 | batch1 | ... | batch_last]
+    #        # 1.  一次forward，backward肯定不能是所有的图像一起,
+    #        因此需要根据 batch_size 将 train_image 和 train_label 分成: [ batch0 |
+    #        batch1 | ...  | batch_last]
     #        '''
     #        batch_images = [] # 请实现 step #1
     #        batch_labels = [] # 请实现 step #1
@@ -532,11 +775,12 @@ class LeNet(object):
     #            #mnist.forward(X_batch)
     #            #loss = mnist.backward(X_batch, y_batch)
     #            if batch % 200 == 0:
-    #                print("Epoch %2d Iter %3d Loss %.5f" % (epoch, batch, loss))
+    #                print("Epoch %2d Iter %3d Loss %.5f" % (epoch, batch,
+    #                loss))
 
     #            # 更新梯度
     #            #for w in ["W1", "b1", "W2", "b2", "W3", "b3"]:
-    #            #    mnist.weights[w] -= lr * mnist.gradients[w]
+    #            # mnist.weights[w] -= lr * mnist.gradients[w]
 
 
     #        last = time.time() #计时开始
@@ -544,18 +788,19 @@ class LeNet(object):
                 
     #            这里我只是给了一个范例， 大家在实现上可以不一定要按照这个严格的 2,3,4步骤
     #            我在验证大家的模型时， 只会在main中调用 fit函数 和 evaluate 函数。
-    #            2. 做一次forward，得到pred结果  eg. pred = self.forward(imgs)
-    #            3. pred 和 labels做一次 loss eg. error = self.compute_loss(pred, labels)
-    #            4. 做一次backward， 更新网络权值  eg. self.backward(error, lr=1e-3)
+    #            2.  做一次forward，得到pred结果 eg.  pred = self.forward(imgs)
+    #            3.  pred 和 labels做一次 loss eg.  error = self.compute_loss(pred,
+    #            labels)
+    #            4.  做一次backward， 更新网络权值 eg.  self.backward(error, lr=1e-3)
                 
     #            images = imgs.reshape(batch_size,1,28,28)
-    #        #    print('yes')
+    #        # print('yes')
     #            pred = self.forward(images)
     #            error = loss.cross_entropy_loss(pred,labels)
     #            iternum += 1
     #            print('iternum:%d' % iternum,"loss:",error)
-    #        #    self.backward(batch_size,error)
-    #        #    print('labels:',labels.shape)
+    #        # self.backward(batch_size,error)
+    #        # print('labels:',labels.shape)
     #            pass'''
     #        duration = time.time() - last
     #        sum_time += duration
@@ -567,66 +812,6 @@ class LeNet(object):
 
     #    avg_time = sum_time / epoches
     #    return avg_time, accuracies
-
-    def fit(
-        self,
-        train_image,
-        train_label,
-        test_image = None,
-        test_label = None,
-        epoches = 1,
-        batch_size = 16,
-        lr = 1.0e-3
-    ):
-        iternum = 0
-        sum_time = 0
-        accuracies = []
-        print("fit started")
-        last = time.time()
-        #for epoch in range(epoches):
-
-        #    train_image = self.data_augmentation(train_image)
-            
-        #    num_train = train_image.shape[0]
-        #    num_batch = num_train // batch_size
-        #    for batch in range(num_batch):
-        #        # get batch data
-        #        batch_mask = np.random.choice(num_train, batch_size, False)
-        #        images = train_image[batch_mask]
-        #        labels = train_label[batch_mask]
-        #        images = images.reshape(batch_size,1,28,28)
-        #        pred = self.forward(images)
-        #        error,dy = loss.cross_entropy_loss(pred,labels)
-        #        iternum += 1
-        #        duration = time.time() - last
-        #        last = time.time()
-        #        speed = duration/batch_size
-        #        print('iternum:%d' % iternum,"loss:",error,"speed:%.4f"% speed,"s/image")
-        #        iternum += 0
-
-            #for imgs, labels in zip(batch_images, batch_labels):
-
-            #    images = imgs.reshape(batch_size,1,28,28)
-            ##    print('yes')
-            #    pred = self.forward(images)
-            #    error = loss.cross_entropy_loss(pred,labels)
-            #    iternum += 1
-            #    print('iternum:%d' % iternum,"loss:",error)
-            ##    self.backward(batch_size,error)
-            ##    print('labels:',labels.shape)
-            #    pass
-            #duration = time.time() - last
-            #sum_time += duration
-
-        #if epoch % 1 == 0:
-        accuracy = self.evaluate(test_image, test_label)
-        print("epoch{} accuracy{}".format(epoch, accuracy))
-        accuracies.append(accuracy)
-
-        avg_time = sum_time / epoches
-        print("fit finished")
-        return avg_time, accuracies
-
 def dnn_mnist():
     # load datasets
     path = 'mnist.pkl.gz'
@@ -636,7 +821,7 @@ def dnn_mnist():
     X_test, y_test = test_set
 
     # 转为稀疏分类
-    y_train, y_val,y_test =utils.to_categorical(y_train,10),utils.to_categorical(y_val,10),utils.to_categorical(y_test,10)
+    y_train, y_val,y_test = utils.to_categorical(y_train,10),utils.to_categorical(y_val,10),utils.to_categorical(y_test,10)
 
     # bookeeping for best model based on validation set
     best_val_acc = -1
